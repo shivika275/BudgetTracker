@@ -27,7 +27,7 @@ func main() {
 
 	// Protected routes
 	api := r.PathPrefix("/api").Subrouter()
-	//api.Use(AuthMiddleware)
+	api.Use(AuthMiddleware)
 
 	// Income routes
 	api.HandleFunc("/income", AddIncomeHandler).Methods("POST")

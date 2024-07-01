@@ -9,14 +9,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/google/uuid"
 )
 
 var db *dynamodb.DynamoDB
 
 func init() {
-	// // Initialize a session that the SDK will use to load
-	// // credentials from the shared credentials file ~/.aws/credentials
-	// // and region from the shared configuration file ~/.aws/config.
+	// local DB
 	// sess, err := session.NewSession(&aws.Config{
 	// 	Region:      aws.String("us-west-2"),
 	// 	Endpoint:    aws.String("http://localhost:8000"),
@@ -528,4 +527,57 @@ func DeleteExpense(userId string, month string, expenseItemName string) error {
 	}
 
 	return nil
+}
+
+func CreateUserEntry(registerData RegisterData) error {
+	// Generate a unique ID for the user
+	userID := uuid.New().String()
+
+	// Store user data in DynamoDB
+	_, err := db.PutItem(&dynamodb.PutItemInput{
+		TableName: aws.String("Users"),
+		Item: map[string]*dynamodb.AttributeValue{
+			"userName": {
+				S: aws.String(registerData.Username),
+			},
+			"userId": {
+				S: aws.String(userID),
+			},
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("Failed to create user in DB :  " + err.Error())
+	}
+	return nil
+
+}
+
+func GetUserIdByUserName(userName string) (string, error) {
+
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String("Users"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"userName": {
+				S: aws.String(userName),
+			},
+		},
+	}
+
+	result, err := db.GetItem(input)
+	if err != nil {
+		return "", err
+	}
+
+	if result.Item == nil {
+		return "", fmt.Errorf("user not found")
+	}
+
+	var userData UserData
+	err = dynamodbattribute.UnmarshalMap(result.Item, &userData)
+	if err != nil {
+		return "", err
+	}
+
+	return userData.UserId, nil
 }

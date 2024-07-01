@@ -5,9 +5,10 @@ import TransactionAnalysisPage from './components/TransactionAnalysisPage';
 import LoginPage from './components/LoginPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import './App.css';
+import RegisterPage from './components/Register';
 
 function Navigation() {
-  const { isAuthenticated, setIsAuthenticated } = useAuth();
+  const { isAuthenticated, setIsAuthenticated, logout } = useAuth();
 
   if (!isAuthenticated) return null;
 
@@ -16,7 +17,7 @@ function Navigation() {
       <ul>
         <li><Link to="/">Income & Budget</Link></li>
         <li><Link to="/transactions">Transaction Analysis</Link></li>
-        <li><button onClick={() => setIsAuthenticated(false)}>Logout</button></li>
+        <li><button onClick={() => logout()}>Logout</button></li>
       </ul>
     </nav>
   );
@@ -24,6 +25,7 @@ function Navigation() {
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
+  console.log(isAuthenticated)
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
@@ -35,6 +37,7 @@ function App() {
           <Navigation />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <BudgetPage />

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import './TransactionAnalysisPage.css';
+import { AuthProvider, useAuth } from './AuthContext';
 
 const API_BASE_URL = 'https://backend.shivikasingh.com/api' //'http://localhost:8080/api';
 
 function TransactionAnalysisPage() {
   const [transactions, setTransactions] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
-  const userId = 'user123'; // Replace with actual user ID from authentication
+  //const userId = 'user123'; // Replace with actual user ID from authentication
+
+  const { userId, token } = useAuth();
 
   useEffect(() => {
     fetchTransactions();
@@ -15,7 +18,12 @@ function TransactionAnalysisPage() {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/expense?userId=${userId}&month=${currentMonth}`);
+      const response = await fetch(`${API_BASE_URL}/expense?userId=${userId}&month=${currentMonth}`, {
+        method: 'GET',
+        headers: {
+          'Authorization' : token
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch transactions');
       const data = await response.json();
       setTransactions(data);
@@ -61,7 +69,10 @@ function TransactionAnalysisPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/expense`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json' ,
+          'Authorization' : token
+        },
         body: JSON.stringify({ expenses: transactionsToSave }),
       });
       if (!response.ok) throw new Error('Failed to save transactions');
@@ -89,7 +100,10 @@ function TransactionAnalysisPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/expense/${userId}/${currentMonth}/${transaction.expenseItemName}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json' ,
+          'Authorization' : token
+        },
         body: JSON.stringify({
           newValue: transaction.expenseItemValue,
           newTags: transaction.expenseTags
@@ -107,6 +121,9 @@ function TransactionAnalysisPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/expense/${userId}/${currentMonth}/${transactionToDelete.expenseItemName}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization' : token
+        }
       });
       if (!response.ok) throw new Error('Failed to delete transaction');
       console.log('Transaction deleted successfully');

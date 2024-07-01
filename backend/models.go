@@ -1,9 +1,28 @@
 package main
 
-type User struct {
-	UserID       string `json:"userId"`
-	Username     string `json:"username"`
-	PasswordHash string `json:"password,omitempty"`
+type UserData struct {
+	Username string `json:"username"`
+	UserId   string `json:"userId"`
+}
+
+type RegisterData struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginData struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type AuthResult struct {
+	AccessToken  string `json:"accessToken"`
+	IdToken      string `json:"idToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    int64  `json:"expiresIn"`
+	TokenType    string `json:"tokenType"`
+	UserId       string `json:"userId"`
 }
 
 type IncomeItem struct {

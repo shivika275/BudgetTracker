@@ -9,13 +9,62 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Auth handlers
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement user registration
+	var registerData RegisterData
+	if err := json.NewDecoder(r.Body).Decode(&registerData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Registering user as %v", registerData)
+
+	err := CreateUserInCognito(registerData)
+	if err != nil {
+		log.Printf("Registering user err %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = CreateUserEntry(registerData)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Printf("Registering user complete %v", registerData)
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Registration successful"})
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement user login
+
+	var loginData LoginData
+
+	if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	log.Printf("Authenticating user as %v", loginData)
+	result, err := AuthenticateUser(loginData)
+	if err != nil {
+		log.Printf("Authenticating user err %v", err)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	userId, err := GetUserIdByUserName(loginData.Username)
+	log.Printf("Got user as %v", userId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	result.UserId = userId
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
 }
 
 // Income handlers
@@ -31,7 +80,6 @@ func AddIncomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Get the userId from the authenticated user's session
 	// For now, we'll use the userId passed in the request
-	// In a real application, you would get this from the authenticated user's session
 
 	// Validate the input
 	if incomeItem.UserId == "" || incomeItem.IncomeItemName == "" || incomeItem.Month == "" {
@@ -88,7 +136,7 @@ func UpdateIncomeHandler(w http.ResponseWriter, r *http.Request) {
 	monthStr := vars["month"]
 	incomeItemName := vars["incomeItemName"]
 
-	// TODO: In a real application, get the userId from the authenticated user's session
+	// TODO:get the userId from the authenticated user's session
 	// instead of from URL parameters
 
 	// Validate the input
@@ -128,7 +176,7 @@ func DeleteIncomeHandler(w http.ResponseWriter, r *http.Request) {
 	monthStr := vars["month"]
 	incomeItemName := vars["incomeItemName"]
 
-	// TODO: In a real application, get the userId from the authenticated user's session
+	// TODO: get the userId from the authenticated user's session
 	// instead of from URL parameters
 
 	// Validate the input
@@ -163,7 +211,6 @@ func AddBudgetHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Get the userId from the authenticated user's session
 	// For now, we'll use the userId passed in the request
-	// In a real application, you would get this from the authenticated user's session
 
 	// Validate the input
 	if budgetItem.UserID == "" || budgetItem.BudgetItemName == "" || budgetItem.Month == "" {
@@ -190,7 +237,7 @@ func GetAllBudgetHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("userId")
 	monthStr := r.URL.Query().Get("month")
 
-	// TODO: In a real application, get the userId from the authenticated user's session
+	// TODO: get the userId from the authenticated user's session
 	// instead of from query parameters
 
 	// Validate the input
@@ -218,7 +265,7 @@ func UpdateBudgetHandler(w http.ResponseWriter, r *http.Request) {
 	monthStr := vars["month"]
 	budgetItemName := vars["budgetItemName"]
 
-	// TODO: In a real application, get the userId from the authenticated user's session
+	// TODO:get the userId from the authenticated user's session
 	// instead of from URL parameters
 
 	// Validate the input
@@ -258,7 +305,7 @@ func DeleteBudgetHandler(w http.ResponseWriter, r *http.Request) {
 	monthStr := vars["month"]
 	budgetItemName := vars["budgetItemName"]
 
-	// TODO: In a real application, get the userId from the authenticated user's session
+	// TODO:get the userId from the authenticated user's session
 	// instead of from URL parameters
 
 	// Validate the input
@@ -302,7 +349,6 @@ func AddExpensesHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Get the userId from the authenticated user's session
 	// For now, we'll use the userId passed in the first expense item
-	// In a real application, you would get this from the authenticated user's session
 
 	// Validate the input
 	for _, item := range requestBody.Expenses {
@@ -331,7 +377,7 @@ func GetAllExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("userId")
 	monthStr := r.URL.Query().Get("month")
 
-	// TODO: In a real application, get the userId from the authenticated user's session
+	// TODO: get the userId from the authenticated user's session
 	// instead of from query parameters
 
 	// Validate the input
@@ -359,7 +405,7 @@ func UpdateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	monthStr := vars["month"]
 	expenseItemName := vars["expenseItemName"]
 
-	// TODO: In a real application, get the userId from the authenticated user's session
+	// TODO: get the userId from the authenticated user's session
 	// instead of from URL parameters
 
 	// Validate the input
@@ -400,7 +446,7 @@ func DeleteExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	monthStr := vars["month"]
 	expenseItemName := vars["expenseItemName"]
 
-	// TODO: In a real application, get the userId from the authenticated user's session
+	// TODO: get the userId from the authenticated user's session
 	// instead of from URL parameters
 
 	// Validate the input
